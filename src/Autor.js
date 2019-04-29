@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
+import PubSub from 'pubsub-js';
 
 import $ from 'jquery';
 import InputCustomizado from './components/InputCustomizado';
+import TratadorErros from './TratadorErros';
 
 class FormularioAutor extends Component {
     constructor() {
@@ -54,13 +56,17 @@ class FormularioAutor extends Component {
             dataType: 'json',
             type: 'post',
             data: JSON.stringify({ nome: this.state.nome, email: this.state.email, senha: this.state.senha }),
-            success: function (resposta) {
-                this.props.callBackAtualizaListagem(resposta);
-                
-                console.log("enviado com sucesso");
+            success: function (novaListagem) {
+                PubSub.publish('atualiza-lista-autores', novaListagem);
+                this.setState({ nome: '', email: '', senha: '' });
             }.bind(this),
             error: function (resposta) {
-                console.log("erro");
+                if (resposta.status === 400) {
+                    new TratadorErros().publicaErros(resposta.responseJSON);
+                }
+            },
+            beforeSend: function () {
+                PubSub.publish('limpa-erros', {});
             }
         });
     }
@@ -101,7 +107,6 @@ export default class AutorBox extends Component {
     constructor() {
         super();
         this.state = { lista: [] };
-        this.atualizaListagem = this.atualizaListagem.bind(this);
     }
 
     componentDidMount() {
@@ -112,16 +117,16 @@ export default class AutorBox extends Component {
                 this.setState({ lista: resposta });
             }.bind(this)
         });
-    }
 
-    atualizaListagem(novaLista) {
-        this.setState({ lista: novaLista });
+        PubSub.subscribe('atualiza-lista-autores', function (topico, novaLista) {
+            this.setState({ lista: novaLista });
+        }.bind(this));
     }
 
     render() {
         return (
             <div>
-                <FormularioAutor callBackAtualizaListagem={this.atualizaListagem} />
+                <FormularioAutor />
                 <TabelaAutores lista={this.state.lista} />
             </div>
         );
