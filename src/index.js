@@ -8,6 +8,7 @@ import * as serviceWorker from './serviceWorker';
 
 import App from './App';
 import AutorBox from './Autor';
+import LivroBox from './Livro';
 
 ReactDOM.render(
     (<BrowserRouter history={createBrowserHistory}>
@@ -15,6 +16,7 @@ ReactDOM.render(
             <App>
                 <Route exact path='/' component={AutorBox} />
                 <Route path='/autor' component={AutorBox} />
+                <Route path='/livro' component={LivroBox} />
             </App>
         </div>
     </BrowserRouter>),
